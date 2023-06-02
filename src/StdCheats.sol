@@ -195,7 +195,7 @@ abstract contract StdCheatsSafe {
     }
 
     // Checks that `addr` is not blacklisted by token contracts that have a blacklist.
-    function assumeNoBlacklisted(address token, address addr) internal virtual {
+    function assumeNoBlacklisted(address token, address addr) internal view virtual {
         // Nothing to check if `token` is not a contract.
         uint256 tokenCodeSize;
         assembly {
@@ -215,13 +215,8 @@ abstract contract StdCheatsSafe {
         vm.assume(!success || abi.decode(returnData, (bool)) == false);
     }
 
-    function assumeNoPrecompiles(address addr) internal virtual {
-        // Assembly required since `block.chainid` was introduced in 0.8.0.
-        uint256 chainId;
-        assembly {
-            chainId := chainid()
-        }
-        assumeNoPrecompiles(addr, chainId);
+    function assumeNoPrecompiles(address addr) internal pure virtual {
+        assumeNoPrecompiles(addr, _pureChainId());
     }
 
     function assumeNoPrecompiles(address addr, uint256 chainId) internal pure virtual {
@@ -515,6 +510,25 @@ abstract contract StdCheatsSafe {
     function assumePayable(address addr) internal virtual {
         (bool success,) = payable(addr).call{value: 0}("");
         vm.assume(success);
+    }
+
+    function _viewChainId() private view returns (uint256 chainId) {
+        // Assembly required since `block.chainid` was introduced in 0.8.0.
+        assembly {
+            chainId := chainid()
+        }
+
+        //Silence warnings in older Solc versions.
+        address(this);
+    }
+
+    function _pureChainId() private pure returns (uint256 chainId) {
+        function() internal view returns (uint256) fnIn = _viewChainId;
+        function() internal pure returns (uint256) pureChainId;
+        assembly {
+            pureChainId := fnIn
+        }
+        chainId = pureChainId();
     }
 }
 
