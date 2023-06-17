@@ -21,7 +21,9 @@ jobs:
       - name: Print forge version
         run: forge --version
 
-      # Backwards compatibility checks: 0.y.0 (or oldest), and releases with known issues are checked - do not remove those.
+      # Backwards compatibility checks:
+      # - the oldest and newest version of each supported minor version
+      # - versions with specific issues
       - name: Check compatibility with 0.8.0
         if: always()
         run: forge build --skip test --use solc:0.8.0
